@@ -63,7 +63,7 @@ app.on("activate", () => {
 
 function setupConnectionToRestartOnConnectionLost() {
     _connection = new ConnectionBuilder()
-        .connectTo("dotnet", "run", "--project", "./core/DatafyApp")
+        .connectTo("dotnet", "run", "--project", "./dotnet/DatafyApp")
         .build();
 
     _connection.onDisconnect = () => {
