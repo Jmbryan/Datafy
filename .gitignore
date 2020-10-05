@@ -1,0 +1,9 @@
+builds/
+dist/
+logs/
+node_modules/
+package-lock.json
+**/.vs/
+**/.vscode/
+**/bin/
+**/obj/
