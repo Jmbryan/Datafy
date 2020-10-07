@@ -8,5 +8,6 @@ namespace DatafyCore
     {
         string Name { get; }
         string Description { get; }
+        ILogger Logger { get; set; }
     }
 }

@@ -4,6 +4,9 @@ namespace DatafyCore
 {
     public interface IDriver : IPlugin
     {
-        void LoadAll();
+        ISerializer Serializer { get; set; }
+
+        bool Initialize(DriverConfig config);
+        bool LoadAll(Transaction transaction);
     }
 }

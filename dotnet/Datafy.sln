@@ -7,9 +7,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DatafyApp", "DatafyApp\Data
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DatafyCore", "DatafyCore\DatafyCore.csproj", "{7016AE13-F5ED-49C3-A137-357DD22D10A6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DatafyDriverJSON", "DatafyDriverJSON\DatafyDriverJSON.csproj", "{E78A008A-E121-47A7-81B0-CA00222380B6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DatafyDriverFile", "DatafyDriverFile\DatafyDriverFile.csproj", "{E78A008A-E121-47A7-81B0-CA00222380B6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DatafyExporterJSON", "DatafyExporterJSON\DatafyExporterJSON.csproj", "{3C174FE6-E39B-4B98-B2F9-8AE086A2CA93}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DatafyExporterFile", "DatafyExporterFile\DatafyExporterFile.csproj", "{3C174FE6-E39B-4B98-B2F9-8AE086A2CA93}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
