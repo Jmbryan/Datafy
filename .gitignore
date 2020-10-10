@@ -1,9 +1,9 @@
-builds/
-data/
-dist/
-logs/
-node_modules/
-package-lock.json
+/builds/
+/data/
+/dist/
+/logs/
+/node_modules/
+/package-lock.json
 **/.vs/
 **/.vscode/
 **/bin/

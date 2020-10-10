@@ -8,7 +8,7 @@ namespace Datafy.Core.Json
     /// </summary>
     public sealed class JsonSerializer : ISerializer
     {
-        public TextFormatType FormatType => TextFormatType.JSON;
+        public TextFormatType TextFormat => TextFormatType.JSON;
         private readonly JsonSerializerOptions m_options;
 
         public JsonSerializer(IFactory factory, bool writeIndented)
