@@ -1,18 +1,17 @@
-﻿using System;
-using System.Reflection;
+﻿using System.Reflection;
 using System.Runtime.Loader;
 using System.Collections.Generic;
 using System.Linq;
 using System.IO;
 using Microsoft.Extensions.Logging;
 using ElectronCgi.DotNet;
-using DatafyCore;
+using Datafy.Core;
 
-namespace DatafyApp
+namespace Datafy.App
 {
     class Program
     {
-        static DatafyCore.ILogger Logger { get; set; }
+        static Datafy.Core.ILogger Logger { get; set; }
         static IManager Manager { get; set; }
 
         static void Main(string[] args)
@@ -30,7 +29,8 @@ namespace DatafyApp
             Manager = manager;
 
             // Configure serializer
-            var serializer = new DatafyCore.Json.JsonSerializer(writeIndented: true);
+            var simpleFactory = new SimpleFactory();
+            var simpleSerializer = new Datafy.Core.Json.JsonSerializer(simpleFactory, writeIndented: true);
 
             // Configure drivers
             string[] driverPaths = new string[]
@@ -46,7 +46,7 @@ namespace DatafyApp
             foreach (IDriver driver in drivers)
             {
                 driver.Logger = Logger;
-                driver.Serializer = serializer;
+                driver.Serializer = simpleSerializer;
                 Logger.WriteLine($"{driver.Name}\t - {driver.Description}");
                 if (driver.Name == "File Driver")
                 {
@@ -80,16 +80,18 @@ namespace DatafyApp
             {
                 var config = new DriverConfig
                 {
-                    RootDirectory = Path.Combine(rootDirectory, "data"),
-                    ClassDirectory = Path.Combine(rootDirectory, "data\\Classes")
+                    RootDirectory = Path.Combine(rootDirectory, "data")
                 };
+                config.TypeDirectory = Path.Combine(rootDirectory, Path.Combine(config.RootDirectory, "Types"));
+                config.ObjectDirectory = Path.Combine(rootDirectory, Path.Combine(config.RootDirectory, "Objects"));
+
                 if (!activeDriver.Initialize(config))
                 {
                     Logger.WriteLine($"Failed to initialize driver {activeDriver.Name}");
                 }
                 else
                 {
-                    var loadTransaction = new Transaction(manager);
+                    using var loadTransaction = new Transaction(manager);
                     activeDriver.LoadAll(loadTransaction);
                     loadTransaction.Commit();
                 }
@@ -104,6 +106,19 @@ namespace DatafyApp
             {
                 //Logger.WriteLine($"On greeting: {name}");
                 return "Hello " + name;
+            });
+            connection.On<string>("gettypenames", () =>
+            {
+                var sb = new System.Text.StringBuilder();
+                foreach (var type in Manager.TypeList)
+                {
+                    if (sb.Length > 0)
+                    {
+                        sb.Append(',');
+                    }
+                    sb.Append(type.Name);
+                }
+                return sb.ToString();
             });
             //connection.OnAsync<string, string>("greeting", async name => "Hello " + name);
 
@@ -140,11 +155,11 @@ namespace DatafyApp
         {
             int count = 0;
 
-            foreach (Type type in assembly.GetTypes())
+            foreach (System.Type type in assembly.GetTypes())
             {
                 if (typeof(TPlugin).IsAssignableFrom(type))
                 {
-                    if (Activator.CreateInstance(type) is TPlugin result)
+                    if (System.Activator.CreateInstance(type) is TPlugin result)
                     {
                         count++;
                         yield return result;
@@ -155,7 +170,7 @@ namespace DatafyApp
             if (count == 0)
             {
                 string availableTypes = string.Join(",", assembly.GetTypes().Select(t => t.FullName));
-                throw new ApplicationException(
+                throw new System.ApplicationException(
                     $"Can't find any type which implements {typeof(TPlugin).Name} in {assembly} from {assembly.Location}.\n" +
                     $"Available types: {availableTypes}");
             }

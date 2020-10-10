@@ -1,5 +1,5 @@
 ﻿using System;
-using DatafyCore;
+using Datafy.Core;
 
 namespace DatafyExporter
 {

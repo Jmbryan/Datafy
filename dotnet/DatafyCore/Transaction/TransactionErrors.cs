@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace DatafyCore
+namespace Datafy.Core
 {
     public class TransactionError
     {

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace DatafyCore
+namespace Datafy.Core
 {
     /// <summary>
     /// Describes how an object is represented by text

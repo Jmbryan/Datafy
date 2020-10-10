@@ -2,12 +2,19 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace DatafyCore.Json
+namespace Datafy.Core.Json
 {
     internal abstract class JsonConverterBase<T> : JsonConverter<T>
     {
+        public IFactory Factory { get; }
+
+        protected JsonConverterBase(IFactory factory)
+        {
+            Factory = factory;
+        }
+
         #region Readers
-        protected void ReadValue(ref Utf8JsonReader reader, Value value, ValueType valueType)
+        protected void ReadValue(ref Utf8JsonReader reader, IValue value, ValueType valueType)
         {
             switch (valueType)
             {
@@ -142,6 +149,18 @@ namespace DatafyCore.Json
             return result;
         }
 
+        protected ulong ReadUInt64(ref Utf8JsonReader reader)
+        {
+            if (reader.TokenType != JsonTokenType.Number)
+            {
+                throw new JsonException();
+            }
+
+            var result = reader.GetUInt64();
+            reader.Read();
+            return result;
+        }
+
         protected double ReadDouble(ref Utf8JsonReader reader)
         {
             if (reader.TokenType != JsonTokenType.Number)
@@ -156,7 +175,7 @@ namespace DatafyCore.Json
         #endregion
 
         #region Writers
-        protected void WriteValue(Utf8JsonWriter writer, string name, Value value)
+        protected void WriteValue(Utf8JsonWriter writer, string name, IValue value)
         {
             switch (value.ValueType)
             {
@@ -187,9 +206,41 @@ namespace DatafyCore.Json
         #endregion
     }
 
-    internal class JsonClassConverter : JsonConverterBase<Class>
+    internal class JsonObjectConverter : JsonConverterBase<IObject>
     {
-        public override Class Read(ref Utf8JsonReader reader, System.Type typeToConvert, JsonSerializerOptions options)
+        public JsonObjectConverter(IFactory factory) : base(factory) { }
+
+        public override IObject Read(ref Utf8JsonReader reader, System.Type typeToConvert, JsonSerializerOptions options)
+        {
+            VerifyStartObject(ref reader);
+
+            // Object ID
+            VerifyPropertyName(ref reader, "ObjectID");
+            var objectId = new ObjectId(ReadUInt64(ref reader));
+
+            // Type ID
+            VerifyPropertyName(ref reader, "TypeID");
+            var typeId = new TypeId(ReadUInt64(ref reader));
+
+            VerifyEndObject(ref reader);
+
+            return Factory.CreateObject(objectId, typeId);
+        }
+
+        public override void Write(Utf8JsonWriter writer, IObject value, JsonSerializerOptions options)
+        {
+            writer.WriteStartObject();
+            writer.WriteNumber("ObjectID", value.ObjectId.Value);
+            writer.WriteNumber("TypeID", value.TypeId.Value);
+            writer.WriteEndObject();
+        }
+    }
+
+    internal class JsonTypeConverter : JsonConverterBase<IType>
+    {
+        public JsonTypeConverter(IFactory factory) : base(factory) { }
+
+        public override IType Read(ref Utf8JsonReader reader, System.Type typeToConvert, JsonSerializerOptions options)
         {
             VerifyStartObject(ref reader);
 
@@ -199,15 +250,15 @@ namespace DatafyCore.Json
 
             // Type ID
             VerifyPropertyName(ref reader, "TypeID");
-            var typeId = new TypeId(ReadUInt16(ref reader));
+            var typeId = new TypeId(ReadUInt64(ref reader));
 
             // Fields array
             VerifyPropertyName(ref reader, "Fields");
             VerifyStartArray(ref reader);
-            List<Field> fields = new List<Field>();
+            List<IField> fields = new List<IField>();
             do
             {
-                var field = System.Text.Json.JsonSerializer.Deserialize<Field>(ref reader, options);
+                var field = System.Text.Json.JsonSerializer.Deserialize<IField>(ref reader, options);
                 if (field != null)
                 {
                     fields.Add(field);
@@ -218,10 +269,10 @@ namespace DatafyCore.Json
 
             VerifyEndObject(ref reader);
 
-            return new Class(name, typeId, fields);
+            return Factory.CreateType(name, typeId, fields);
         }
 
-        public override void Write(Utf8JsonWriter writer, Class value, JsonSerializerOptions options)
+        public override void Write(Utf8JsonWriter writer, IType value, JsonSerializerOptions options)
         {
             writer.WriteStartObject();
             writer.WriteString("Name", value.Name);
@@ -236,9 +287,11 @@ namespace DatafyCore.Json
         }
     }
 
-    internal class JsonFieldConverter : JsonConverterBase<Field>
+    internal class JsonFieldConverter : JsonConverterBase<IField>
     {
-        public override Field Read(ref Utf8JsonReader reader, System.Type typeToConvert, JsonSerializerOptions options)
+        public JsonFieldConverter(IFactory factory) : base(factory) { }
+
+        public override IField Read(ref Utf8JsonReader reader, System.Type typeToConvert, JsonSerializerOptions options)
         {
             VerifyStartObject(ref reader);
 
@@ -253,7 +306,7 @@ namespace DatafyCore.Json
 
             // Optional properties
             string propertyName;
-            Value defaultValue = null;
+            IValue defaultValue = default, minValue = default, maxValue = default;
             do
             {
                 if (reader.TokenType == JsonTokenType.PropertyName)
@@ -264,8 +317,20 @@ namespace DatafyCore.Json
                     {
                         case "DefaultValue":
                             {
-                                defaultValue = new Value(valueType);
+                                defaultValue = Factory.CreateValue(valueType);
                                 ReadValue(ref reader, defaultValue, valueType);
+                                break;
+                            }
+                        case "MinValue":
+                            {
+                                minValue = Factory.CreateValue(valueType);
+                                ReadValue(ref reader, minValue, valueType);
+                                break;
+                            }
+                        case "MaxValue":
+                            {
+                                maxValue = Factory.CreateValue(valueType);
+                                ReadValue(ref reader, maxValue, valueType);
                                 break;
                             }
                     }
@@ -275,10 +340,10 @@ namespace DatafyCore.Json
 
             VerifyEndObject(ref reader);
 
-            return new Field(name, valueType, defaultValue);
+            return Factory.CreateField(name, valueType, defaultValue, minValue, maxValue);
         }
 
-        public override void Write(Utf8JsonWriter writer, Field field, JsonSerializerOptions options)
+        public override void Write(Utf8JsonWriter writer, IField field, JsonSerializerOptions options)
         {
             writer.WriteStartObject();
             writer.WriteString("Name", field.Name);

@@ -4,8 +4,9 @@
   "description": "",
   "main": "dist/main.js",
   "scripts": {
-    "build:react": "webpack --mode development --config webpack.react.config.js",
     "build": "webpack --mode development",
+    "build:materialui": "webpack --mode development --config webpack.renderer-materialui.config.js",
+    "build:pcui": "webpack --mode development --config webpack.renderer-pcui.config.js",
     "start": "electron ./dist/main.js",
     "package-win": "electron-packager . datafy --overwrite --asar=true --platform=win32 --arch=ia32 --icon=assets/icons/win/icon.ico --prune=true --out=builds --version-string.CompanyName=CE --version-string.FileDescription=CE --version-string.ProductName=\"Datafy\""
   },
@@ -22,6 +23,7 @@
     "@babel/preset-typescript": "^7.10.4",
     "@material-ui/core": "^4.11.0",
     "@material-ui/icons": "^4.9.1",
+    "@playcanvas/pcui": "^1.0.0",
     "@types/react": "^16.9.50",
     "@types/react-dom": "^16.9.8",
     "babel-loader": "^8.1.0",

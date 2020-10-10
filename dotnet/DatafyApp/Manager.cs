@@ -1,33 +1,35 @@
-﻿using System;
-using System.Collections.Generic;
-using DatafyCore;
+﻿using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using Datafy.Core;
 
-namespace DatafyApp
+namespace Datafy.App
 {
     class Manager : IManager
     {
-        private readonly Dictionary<string, Class> m_classesByName;
-        private readonly Dictionary<TypeId, Class> m_classesByTypeId;
-        private readonly List<Class> m_classList;
+        private readonly Dictionary<string, IType> m_typesByName;
+        private readonly Dictionary<TypeId, IType> m_typesById;
+        
+        private readonly List<IType> m_typeList;
+        public IReadOnlyList<IType> TypeList => new ReadOnlyCollection<IType>(m_typeList);
 
         private Transaction m_activeTransaction = null;
 
         public Manager()
         {
-            m_classesByName = new Dictionary<string, Class>();
-            m_classesByTypeId = new Dictionary<TypeId, Class>();
-            m_classList = new List<Class>();
+            m_typesByName = new Dictionary<string, IType>();
+            m_typesById = new Dictionary<TypeId, IType>();
+            m_typeList = new List<IType>();
         }
 
-        public Class GetClass(string name)
+        public IType GetType(string name)
         {
-            m_classesByName.TryGetValue(name, out var value);
+            m_typesByName.TryGetValue(name, out var value);
             return value;
         }
 
-        public Class GetClass(TypeId typeId)
+        public IType GetType(TypeId typeId)
         {
-            m_classesByTypeId.TryGetValue(typeId, out var value);
+            m_typesById.TryGetValue(typeId, out var value);
             return value;
         }
 
@@ -35,7 +37,7 @@ namespace DatafyApp
         {
             if (m_activeTransaction != null)
             {
-                throw new ArgumentException("A transaction is already active");
+                throw new System.ArgumentException("A transaction is already active");
             }
             m_activeTransaction = transaction;
         }
@@ -49,66 +51,86 @@ namespace DatafyApp
             m_activeTransaction = null;
         }
 
-        public bool TryAddClass(Class newClass, Transaction transaction)
+        public bool TryAddType(IType type, Transaction transaction)
         {
             if (m_activeTransaction != transaction)
             {
-                transaction.AddError(new TransactionError($"Failed to add class '{newClass.Name}' - The transaction is not active"));
+                transaction.AddError(new TransactionError($"Failed to add type '{type.Name}' - The transaction is not active"));
                 return false;
             }
 
-            if (m_classesByName.ContainsKey(newClass.Name))
+            if (m_typesByName.ContainsKey(type.Name))
             {
-                transaction.AddError(new TransactionError($"Failed to add class '{newClass.Name}' - A class of that name already exists"));
+                transaction.AddError(new TransactionError($"Failed to add type '{type.Name}' - A type of that name already exists"));
                 return false;
             }
 
-            if (m_classesByTypeId.TryGetValue(newClass.TypeId, out var existingClass))
+            if (m_typesById.TryGetValue(type.TypeId, out var existingType))
             {
-                transaction.AddError(new TransactionError($"Failed to add class '{newClass.Name}' - The class '{existingClass.Name}' is already using TypeId {newClass.TypeId.Value}"));
+                transaction.AddError(new TransactionError($"Failed to add type '{type.Name}' - The type '{existingType.Name}' is already using TypeId {type.TypeId.Value}"));
                 return false;
             }
 
-            AddClass(newClass);
+            AddType(type);
             return true;
         }
 
-        public void AddClass(Class newClass)
+        public void AddType(IType type)
         {
-            m_classesByName.Add(newClass.Name, newClass);
-            m_classesByTypeId.Add(newClass.TypeId, newClass);
-            m_classList.Add(newClass);
+            m_typesByName.Add(type.Name, type);
+            m_typesById.Add(type.TypeId, type);
+            m_typeList.Add(type);
         }
 
-        public bool TryRemoveClass(Class removeClass, Transaction transaction)
+        public bool TryRemoveType(IType type, Transaction transaction)
         {
             if (m_activeTransaction != transaction)
             {
-                transaction.AddError(new TransactionError($"Failed to remove class '{removeClass.Name}' - The transaction is not active"));
+                transaction.AddError(new TransactionError($"Failed to remove type '{type.Name}' - The transaction is not active"));
                 return false;
             }
 
-            if (!m_classesByName.ContainsKey(removeClass.Name))
+            if (!m_typesByName.ContainsKey(type.Name))
             {
-                transaction.AddError(new TransactionError($"Failed to remove class '{removeClass.Name}' - No class found"));
+                transaction.AddError(new TransactionError($"Failed to remove type '{type.Name}' - No type found"));
                 return false;
             }
 
-            if (!m_classesByTypeId.ContainsKey(removeClass.TypeId))
+            if (!m_typesById.ContainsKey(type.TypeId))
             {
-                transaction.AddError(new TransactionError($"Failed to remove class '{removeClass.Name}' - No class found for TypeId {removeClass.TypeId.Value}"));
+                transaction.AddError(new TransactionError($"Failed to remove type '{type.Name}' - No type found for TypeId {type.TypeId.Value}"));
                 return false;
             }
 
-            RemoveClass(removeClass);
+            RemoveType(type);
             return true;
         }
 
-        public void RemoveClass(Class removeClass)
+        public void RemoveType(IType type)
         {
-            m_classesByName.Remove(removeClass.Name);
-            m_classesByTypeId.Remove(removeClass.TypeId);
-            m_classList.Remove(removeClass);
+            m_typesByName.Remove(type.Name);
+            m_typesById.Remove(type.TypeId);
+            m_typeList.Remove(type);
+        }
+
+        public bool TryAddObject(IObject obj, Transaction transaction)
+        {
+            AddObject(obj);
+            return true;
+        }
+
+        public void AddObject(IObject obj)
+        {
+        }
+
+        public bool TryRemoveObject(IObject obj, Transaction transaction)
+        {
+            RemoveObject(obj);
+            return true;
+        }
+
+        public void RemoveObject(IObject obj)
+        {
         }
     }
 }

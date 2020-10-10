@@ -74,8 +74,12 @@ function setupConnectionToRestartOnConnectionLost() {
     
     _connection.send("greeting", "Mom from C#", (error: any, response: any) => {
         console.log(response);
-        window.webContents.send("greeting", response); 
+        window.webContents.send("greeting", response);
         //_connection.close();
+      });
+
+    _connection.send("gettypenames", (error: any, response: any) => {
+        console.log(response);
       });
 }
 

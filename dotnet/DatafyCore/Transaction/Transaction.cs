@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace DatafyCore
+namespace Datafy.Core
 {
     public class Transaction : IDisposable
     {
@@ -40,14 +40,24 @@ namespace DatafyCore
             }
         }
 
-        public bool AddClass(Class newClass)
+        public bool AddType(IType type)
         {
-            if (m_manager.TryAddClass(newClass, this))
+            if (m_manager.TryAddType(type, this))
             {
-                m_actions.Add(new AddClassTransactionAction(m_manager, this, newClass));
+                m_actions.Add(new AddTypeTransactionAction(m_manager, this, type));
                 return true;
             }
 
+            return false;
+        }
+
+        public bool AddObject(IObject obj)
+        {
+            if (m_manager.TryAddObject(obj, this))
+            {
+                m_actions.Add(new AddObjectTransactionAction(m_manager, this, obj));
+                return true;
+            }
             return false;
         }
 

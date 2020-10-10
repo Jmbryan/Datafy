@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace DatafyCore
+namespace Datafy.Core
 {
     /// <summary>
     /// Converts objects to and from a textual representation
@@ -9,7 +9,10 @@ namespace DatafyCore
     {
         TextFormatType FormatType { get; }
 
-        string SerializeClass(Class value);
-        Class DeserializeClass(string text);
+        string SerializeType(IType type);
+        IType DeserializeType(string text);
+
+        string SerializeObject(IObject obj);
+        IObject DeserializeObject(string text);
     }
 }

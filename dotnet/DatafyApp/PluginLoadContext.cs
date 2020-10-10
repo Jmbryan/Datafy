@@ -2,7 +2,7 @@
 using System.Reflection;
 using System.Runtime.Loader;
 
-namespace DatafyApp
+namespace Datafy.App
 {
     class PluginLoadContext : AssemblyLoadContext
     {

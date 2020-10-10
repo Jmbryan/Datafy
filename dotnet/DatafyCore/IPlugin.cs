@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
-namespace DatafyCore
+namespace Datafy.Core
 {
     public interface IPlugin
     {

@@ -1,8 +1,9 @@
 ﻿using System;
+using Datafy.Core;
 
-namespace DatafyApp
+namespace Datafy.App
 {
-    class Logger : DatafyCore.ILogger
+    class Logger : ILogger
     {
         private readonly string m_logFilePath;
         private System.IO.StreamWriter m_logFile;
