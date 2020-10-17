@@ -5,7 +5,7 @@ namespace Datafy.Core
     /// <summary>
     /// Describes how an object is represented by text
     /// </summary>
-    public enum TextFormatType
+    public enum TextFormat
     {
         Invalid = -1,
 

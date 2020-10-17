@@ -1,14 +1,15 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
+using Datafy.Core;
 
-namespace Datafy.Core.Json
+namespace Datafy.App.Json
 {
     /// <summary>
     /// Converts objects to and from the JSON text format
     /// </summary>
     public sealed class JsonSerializer : ISerializer
     {
-        public TextFormatType TextFormat => TextFormatType.JSON;
+        public TextFormat TextFormat => TextFormat.JSON;
         private readonly JsonSerializerOptions m_options;
 
         public JsonSerializer(IFactory factory, bool writeIndented)

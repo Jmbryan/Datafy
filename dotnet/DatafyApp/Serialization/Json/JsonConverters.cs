@@ -1,8 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Datafy.Core;
 
-namespace Datafy.Core.Json
+namespace Datafy.App.Json
 {
     internal abstract class JsonConverterBase<T> : JsonConverter<T>
     {

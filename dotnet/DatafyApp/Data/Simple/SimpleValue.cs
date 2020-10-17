@@ -7,7 +7,7 @@ namespace Datafy.App
         public ValueType ValueType { get; private set; } = ValueType.Invalid;
         private double m_numericValue = 0.0;
         private string m_stringValue = string.Empty;
-        private object m_objectValue = null;
+        //private object m_objectValue = null;
 
         public bool IsValid => ValueType > ValueType.Invalid && ValueType < ValueType.Count;
         public void Invalidate()
@@ -36,17 +36,33 @@ namespace Datafy.App
             StringValue = value;
         }
 
-        public SimpleValue(SimpleValue other)
-        {
-            ValueType = other.ValueType;
-            m_numericValue = other.m_numericValue;
-            m_stringValue = other.m_stringValue;
-            m_objectValue = other.m_objectValue;
-        }
-
         public SimpleValue(ValueType valueType)
         {
             ValueType = valueType;
+        }
+
+        public SimpleValue(IValue other)
+        {
+            Copy(other);
+        }
+
+        public void Copy(IValue other)
+        {
+            switch (other.ValueType)
+            {
+                case ValueType.Bool:
+                    BoolValue = other.BoolValue;
+                    break;
+                case ValueType.Int:
+                    IntValue = other.IntValue;
+                    break;
+                case ValueType.Float:
+                    FloatValue = other.FloatValue;
+                    break;
+                case ValueType.String:
+                    m_stringValue = other.StringValue;
+                    break;
+            }
         }
 
         public bool BoolValue
@@ -125,7 +141,7 @@ namespace Datafy.App
         {
             m_numericValue = 0.0;
             m_stringValue = string.Empty;
-            m_objectValue = null;
+            //m_objectValue = null;
         }
     }
 }

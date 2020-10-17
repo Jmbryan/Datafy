@@ -8,6 +8,8 @@ namespace Datafy.Core
         private readonly IManager m_manager;
         private readonly List<TransactionAction> m_actions;
         private readonly List<TransactionError> m_errors;
+
+        public bool IsRollingBack { get; private set; }
         
         public Transaction(IManager manager)
         {
@@ -23,42 +25,58 @@ namespace Datafy.Core
             m_manager?.FinishTransaction(this);
         }
 
-        public void Commit()
+        public TransactionResult Commit()
         {
+            var result = new TransactionResult();
+
             int errorCount = m_errors.Count;
             if (errorCount > 0)
             {
+                result.Success = false;
                 Rollback();
             }
+            else
+            {
+                result.Success = true;
+                foreach (var action in m_actions)
+                {
+                    action.Commit(result);
+                }
+            }
+
+            m_manager.CommitTransaction(this, result);
+
+            return result;
         }
 
         public void Rollback()
         {
+            IsRollingBack = true;
             for (int i = m_actions.Count - 1; i >= 0; --i)
             {
                 m_actions[i].Undo();
             }
         }
 
-        public bool AddType(IType type)
+        public void AddType(IType type)
         {
-            if (m_manager.TryAddType(type, this))
-            {
-                m_actions.Add(new AddTypeTransactionAction(m_manager, this, type));
-                return true;
-            }
-
-            return false;
+            AddAction(new AddTypeTransactionAction(m_manager, this, type));
         }
 
-        public bool AddObject(IObject obj)
+        public void UpdateType(IType type)
         {
-            if (m_manager.TryAddObject(obj, this))
-            {
-                m_actions.Add(new AddObjectTransactionAction(m_manager, this, obj));
-                return true;
-            }
-            return false;
+            AddAction(new UpdateTypeTransactionAction(m_manager, this, type));
+        }
+
+        public void AddObject(IObject obj)
+        {
+            AddAction(new AddObjectTransactionAction(m_manager, this, obj));
+        }
+
+        private void AddAction(TransactionAction action)
+        {
+            action.Do();
+            m_actions.Add(action);
         }
 
         public void AddError(TransactionError error)

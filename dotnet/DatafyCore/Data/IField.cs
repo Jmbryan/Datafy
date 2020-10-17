@@ -18,5 +18,7 @@ namespace Datafy.Core
         bool HasMaxValue { get; }
         IValue MaxValue { get; }
         void ClearMaxValue();
+
+        void Copy(IField other);
     }
 }

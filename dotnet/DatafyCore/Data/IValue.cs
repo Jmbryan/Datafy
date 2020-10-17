@@ -12,5 +12,7 @@ namespace Datafy.Core
         int IntValue { get; set; }
         float FloatValue { get; set; }
         string StringValue { get; set; }
+
+        void Copy(IValue other);
     }
 }

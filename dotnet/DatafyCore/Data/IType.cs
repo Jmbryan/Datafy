@@ -8,5 +8,8 @@ namespace Datafy.Core
         TypeId TypeId { get; }
 
         IReadOnlyList<IField> Fields { get; }
+
+        void Copy(IType other);
+        IType Clone();
     }
 }

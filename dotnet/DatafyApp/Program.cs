@@ -24,13 +24,18 @@ namespace Datafy.App
             logger.Connect();
             Logger = logger;
 
+            // Configure DB
+            using var dbProvider = new SQLiteDbProvider<SQLiteDbContext>(new SQLiteDbContextFactory());
+            dbProvider.Connect();
+
             // Conifgure manager
             var manager = new Manager();
+            manager.DbProvider = dbProvider;
             Manager = manager;
 
             // Configure serializer
             var simpleFactory = new SimpleFactory();
-            var simpleSerializer = new Datafy.Core.Json.JsonSerializer(simpleFactory, writeIndented: true);
+            var simpleSerializer = new Datafy.App.Json.JsonSerializer(simpleFactory, writeIndented: true);
 
             // Configure drivers
             string[] driverPaths = new string[]
@@ -109,6 +114,7 @@ namespace Datafy.App
             });
             connection.On<string>("gettypenames", () =>
             {
+                // TODO: consider MemoryCache
                 var sb = new System.Text.StringBuilder();
                 foreach (var type in Manager.TypeList)
                 {

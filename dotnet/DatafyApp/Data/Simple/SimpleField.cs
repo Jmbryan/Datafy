@@ -4,8 +4,8 @@ namespace Datafy.App
 {
     public class SimpleField : IField
     {
-        public string Name { get; }
-        public ValueType ValueType { get; }
+        public string Name { get; private set; }
+        public ValueType ValueType { get; private set; }
 
         private SimpleValue m_defaultValue = null;
         public IValue DefaultValue => m_defaultValue ?? new SimpleValue(ValueType);
@@ -29,6 +29,20 @@ namespace Datafy.App
             SetDefaultValue(defaultValue);
             SetMinValue(minValue);
             SetMaxValue(maxValue);
+        }
+
+        public SimpleField(IField other)
+        {
+            Copy(other);
+        }
+
+        public void Copy(IField other)
+        {
+            Name = other.Name;
+            ValueType = other.ValueType;
+            SetDefaultValue(other.HasDefaultValue ? new SimpleValue(other.DefaultValue) : null);
+            SetMinValue(other.HasMinValue ? new SimpleValue(other.MinValue) : null);
+            SetMaxValue(other.HasMaxValue ? new SimpleValue(other.MaxValue) : null);
         }
 
         public void SetDefaultValue(SimpleValue defaultValue)

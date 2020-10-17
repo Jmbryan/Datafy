@@ -7,7 +7,7 @@ namespace Datafy.Core
     /// </summary>
     public interface ISerializer
     {
-        TextFormatType TextFormat { get; }
+        TextFormat TextFormat { get; }
 
         string SerializeType(IType type);
         IType DeserializeType(string text);

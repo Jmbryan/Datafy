@@ -14,6 +14,8 @@ namespace Datafy.App
 
         private Transaction m_activeTransaction = null;
 
+        public IDbProvider DbProvider { get; set; }
+
         public Manager()
         {
             m_typesByName = new Dictionary<string, IType>();
@@ -21,15 +23,15 @@ namespace Datafy.App
             m_typeList = new List<IType>();
         }
 
-        public IType GetType(string name)
-        {
-            m_typesByName.TryGetValue(name, out var value);
-            return value;
-        }
-
         public IType GetType(TypeId typeId)
         {
             m_typesById.TryGetValue(typeId, out var value);
+            return value;
+        }
+
+        public IType GetType(string name)
+        {
+            m_typesByName.TryGetValue(name, out var value);
             return value;
         }
 
@@ -51,62 +53,120 @@ namespace Datafy.App
             m_activeTransaction = null;
         }
 
-        public bool TryAddType(IType type, Transaction transaction)
+        public void CommitTransaction(Transaction transaction, TransactionResult result)
         {
             if (m_activeTransaction != transaction)
             {
-                transaction.AddError(new TransactionError($"Failed to add type '{type.Name}' - The transaction is not active"));
-                return false;
+                return;
             }
 
-            if (m_typesByName.ContainsKey(type.Name))
+            if (result.Success)
             {
-                transaction.AddError(new TransactionError($"Failed to add type '{type.Name}' - A type of that name already exists"));
-                return false;
-            }
+                // Commit all changes to the DB
+                if (DbProvider != null)
+                {
+                    DbProvider.OnTypesAdded(result.AddedTypes);
+                    DbProvider.OnTypesUpdated(result.UpdatedTypes);
+                    DbProvider.OnTypesRemoved(result.RemovedTypes);
 
-            if (m_typesById.TryGetValue(type.TypeId, out var existingType))
+                    DbProvider.OnObjectsAdded(result.AddedObjects);
+                    DbProvider.OnObjectsUpdated(result.UpdatedObjects);
+                    DbProvider.OnObjectsRemoved(result.RemovedObjects);
+                }
+            }
+        }
+
+        public bool TryAddType(IType type, Transaction transaction)
+        {
+            if (!transaction.IsRollingBack)
             {
-                transaction.AddError(new TransactionError($"Failed to add type '{type.Name}' - The type '{existingType.Name}' is already using TypeId {type.TypeId.Value}"));
-                return false;
+                if (m_activeTransaction != transaction)
+                {
+                    transaction.AddError(new TransactionError($"Failed to add type '{type.Name}' - The transaction is not active"));
+                    return false;
+                }
+
+                if (m_typesByName.ContainsKey(type.Name))
+                {
+                    transaction.AddError(new TransactionError($"Failed to add type '{type.Name}' - A type of that name already exists"));
+                    return false;
+                }
+
+                if (m_typesById.TryGetValue(type.TypeId, out var existingType))
+                {
+                    transaction.AddError(new TransactionError($"Failed to add type '{type.Name}' - The type '{existingType.Name}' is already using TypeId {type.TypeId.Value}"));
+                    return false;
+                }
             }
 
             AddType(type);
             return true;
         }
 
-        public void AddType(IType type)
+        private void AddType(IType type)
         {
             m_typesByName.Add(type.Name, type);
             m_typesById.Add(type.TypeId, type);
             m_typeList.Add(type);
         }
 
+        public bool TryUpdateType(IType type, Transaction transaction)
+        {
+            if (!transaction.IsRollingBack)
+            {
+                if (m_activeTransaction != transaction)
+                {
+                    transaction.AddError(new TransactionError($"Failed to update type '{type.Name}' - The transaction is not active"));
+                    return false;
+                }
+
+                if (!m_typesById.ContainsKey(type.TypeId))
+                {
+                    transaction.AddError(new TransactionError($"Failed to update type '{type.Name}' - No type found for TypeId {type.TypeId.Value}"));
+                    return false;
+                }
+            }
+
+            UpdateType(type);
+            return true;
+        }
+
+        private void UpdateType(IType type)
+        {
+            if (m_typesById.TryGetValue(type.TypeId, out var foundType))
+            {
+                foundType.Copy(type);
+            }
+        }
+
         public bool TryRemoveType(IType type, Transaction transaction)
         {
-            if (m_activeTransaction != transaction)
+            if (!transaction.IsRollingBack)
             {
-                transaction.AddError(new TransactionError($"Failed to remove type '{type.Name}' - The transaction is not active"));
-                return false;
-            }
+                if (m_activeTransaction != transaction)
+                {
+                    transaction.AddError(new TransactionError($"Failed to remove type '{type.Name}' - The transaction is not active"));
+                    return false;
+                }
 
-            if (!m_typesByName.ContainsKey(type.Name))
-            {
-                transaction.AddError(new TransactionError($"Failed to remove type '{type.Name}' - No type found"));
-                return false;
-            }
+                if (!m_typesByName.ContainsKey(type.Name))
+                {
+                    transaction.AddError(new TransactionError($"Failed to remove type '{type.Name}' - No type found"));
+                    return false;
+                }
 
-            if (!m_typesById.ContainsKey(type.TypeId))
-            {
-                transaction.AddError(new TransactionError($"Failed to remove type '{type.Name}' - No type found for TypeId {type.TypeId.Value}"));
-                return false;
+                if (!m_typesById.ContainsKey(type.TypeId))
+                {
+                    transaction.AddError(new TransactionError($"Failed to remove type '{type.Name}' - No type found for TypeId {type.TypeId.Value}"));
+                    return false;
+                }
             }
 
             RemoveType(type);
             return true;
         }
 
-        public void RemoveType(IType type)
+        private void RemoveType(IType type)
         {
             m_typesByName.Remove(type.Name);
             m_typesById.Remove(type.TypeId);
@@ -115,22 +175,34 @@ namespace Datafy.App
 
         public bool TryAddObject(IObject obj, Transaction transaction)
         {
+            if (!transaction.IsRollingBack)
+            {
+                // TODO: validate
+            }
+
             AddObject(obj);
             return true;
         }
 
-        public void AddObject(IObject obj)
+        private void AddObject(IObject obj)
         {
+            // TODO
         }
 
         public bool TryRemoveObject(IObject obj, Transaction transaction)
         {
+            if (!transaction.IsRollingBack)
+            {
+                // TODO: validate
+            }
+
             RemoveObject(obj);
             return true;
         }
 
-        public void RemoveObject(IObject obj)
+        private void RemoveObject(IObject obj)
         {
+            // TODO
         }
     }
 }
